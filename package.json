@@ -1,0 +1,10 @@
+{
+    "name": "first-ai-agent",
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "install": "npm install --prefix server && npm install --prefix client",
+        "start-server": "node server/index.js",
+        "start-client": "cd client && npm run dev"
+    }
+}

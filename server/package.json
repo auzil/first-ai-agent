@@ -1,0 +1,9 @@
+{
+    "name": "first-ai-agent-server",
+    "version": "1.0.0",
+    "type": "module",
+    "dependencies": {
+        "openai": "^6.7.0",
+        "socket.io": "^4.8.1"
+    }
+}

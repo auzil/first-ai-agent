@@ -1,0 +1,17 @@
+// light theme tokens
+$bg: #0f172a0a; // slate-900 @ 6%
+$panel: #ffffff;
+$border: #e5e7eb;
+$text: #0f172a;
+$muted: #6b7280;
+$primary: #111827;
+$accent: #3b82f6;
+
+
+// helpers
+@mixin card {
+    background: $panel;
+    border: 1px solid $border;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+}
