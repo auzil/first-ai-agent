@@ -58,7 +58,66 @@ const tools = [
 ]
 
 async function runWithTools(history) {
- // code here
+    // const response = await client.chat.completions.create({
+    //     model: MODEL,
+    //     messages: history,
+    // })
+
+    // const message = response.choices[0].message
+
+    // return message.content || ''
+
+    const MAX_TURNS = 6
+
+    for (let i = 0; i < MAX_TURNS; i++) {
+        const resp = await client.chat.completions.create({
+            model: MODEL,
+            messages: history,
+            tools,
+            tool_choice: 'auto',
+        })
+
+        const wantTools = resp.choices[0].finish_reason === 'tool_calls' && Array.isArray(resp.choices[0].message.tool_calls) && resp.choices[0].message.tool_calls.length > 0
+
+        if (!wantTools) {
+            return resp.choices[0].message.content ?? ''
+        }
+
+        const msg = resp.choices[0].message
+
+        const toolResponses = await Promise.all(
+            msg.tool_calls.map(async (toolCall) => {
+                const { name, arguments: args } = toolCall.function
+                const executor = toolExecutors[name]
+                if (executor) {
+                    try {
+                        const parsedArgs = args ? JSON.parse(args) : {}
+                        const result = await executor(parsedArgs)
+                        return {
+                            role: 'tool',
+                            content: result,
+                            tool_call_id: toolCall.id,
+                        }
+                    } catch (err) {
+                        return {
+                            role: 'tool',
+                            content: `Error executing tool ${name}: ${err.message}`,
+                            tool_call_id: toolCall.id,
+                        }
+                    }
+                } else {
+                    return {
+                        role: 'tool',
+                        content: `No executor found for tool ${name}`,
+                        tool_call_id: toolCall.id,
+                    }
+                }
+            })
+        )
+
+        history.push(msg)
+        history.push(...toolResponses)
+    }
 }
 
 const PORT = process.env.PORT || 3030
@@ -80,6 +139,8 @@ io.on('connection', async (socket) => {
             role: 'system',
             content: `
 You are a helpful, concise AI assistant.
+If the user wants to know the current time, you MUST check the user timezone.
+You have to call getCurrentTime and userTimeZone tools in parallel if possible.
       `.trim(),
         },
     ])
